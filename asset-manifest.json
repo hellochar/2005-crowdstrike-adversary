@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/2005-crowdstrike-adversary/static/css/main.5b10ad6a.chunk.css",
+    "main.js": "/2005-crowdstrike-adversary/static/js/main.1b6850f9.chunk.js",
+    "main.js.map": "/2005-crowdstrike-adversary/static/js/main.1b6850f9.chunk.js.map",
+    "runtime-main.js": "/2005-crowdstrike-adversary/static/js/runtime-main.5acc3147.js",
+    "runtime-main.js.map": "/2005-crowdstrike-adversary/static/js/runtime-main.5acc3147.js.map",
+    "static/js/2.c0a5ae08.chunk.js": "/2005-crowdstrike-adversary/static/js/2.c0a5ae08.chunk.js",
+    "static/js/2.c0a5ae08.chunk.js.map": "/2005-crowdstrike-adversary/static/js/2.c0a5ae08.chunk.js.map",
+    "static/js/3.b3cf8c5c.chunk.js": "/2005-crowdstrike-adversary/static/js/3.b3cf8c5c.chunk.js",
+    "static/js/3.b3cf8c5c.chunk.js.map": "/2005-crowdstrike-adversary/static/js/3.b3cf8c5c.chunk.js.map",
+    "index.html": "/2005-crowdstrike-adversary/index.html",
+    "static/css/main.5b10ad6a.chunk.css.map": "/2005-crowdstrike-adversary/static/css/main.5b10ad6a.chunk.css.map",
+    "static/js/2.c0a5ae08.chunk.js.LICENSE.txt": "/2005-crowdstrike-adversary/static/js/2.c0a5ae08.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.5acc3147.js",
+    "static/js/2.c0a5ae08.chunk.js",
+    "static/css/main.5b10ad6a.chunk.css",
+    "static/js/main.1b6850f9.chunk.js"
+  ]
+}
