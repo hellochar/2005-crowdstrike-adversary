@@ -1,5 +1,5 @@
 {
-  "name": "my-app",
+  "name": "2005-crowdstrike-adversary",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -10,9 +10,13 @@
     "@types/node": "^12.0.0",
     "@types/react": "^16.9.53",
     "@types/react-dom": "^16.9.8",
+    "@types/three": "^0.103.2",
     "react": "^17.0.1",
+    "react-dat-gui": "^4.0.3",
     "react-dom": "^17.0.1",
+    "react-dropzone": "^11.2.4",
     "react-scripts": "4.0.0",
+    "three": "^0.122.0",
     "typescript": "^4.0.3",
     "web-vitals": "^0.2.4"
   },
