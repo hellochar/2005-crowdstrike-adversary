@@ -1,6 +1,7 @@
 {
   "name": "2005-crowdstrike-adversary",
   "version": "0.1.0",
+  "homepage": "https://hellochar.github.io/2005-crowdstrike-adversary",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
@@ -11,6 +12,7 @@
     "@types/react": "^16.9.53",
     "@types/react-dom": "^16.9.8",
     "@types/three": "^0.103.2",
+    "gh-pages": "^3.1.0",
     "react": "^17.0.1",
     "react-dat-gui": "^4.0.3",
     "react-dom": "^17.0.1",
@@ -21,6 +23,8 @@
     "web-vitals": "^0.2.4"
   },
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
