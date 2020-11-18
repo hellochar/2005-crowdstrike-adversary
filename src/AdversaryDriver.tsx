@@ -17,7 +17,7 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { AdversaryPointCloud } from "./AdversaryPointCloud";
 import { GUIState } from "./App";
-import { DuotoneEffect } from "./DuotoneEffect";
+import { GradientEffect } from "./GradientEffect";
 import { smoothstep } from "./smoothstep";
 
 export class AdversaryDriver {
@@ -30,10 +30,11 @@ export class AdversaryDriver {
   timeStarted = 0;
   geom = new PlaneGeometry(200, 200, 512, 512);
   textureBase?: Texture;
-  duotoneEffect!: DuotoneEffect;
+  gradientEffect!: GradientEffect;
   pointCloud?: AdversaryPointCloud;
   // in [0 to 1]
   maxBrightness!: number;
+  minBrightness!: number;
 
   constructor(public canvas: HTMLCanvasElement, private state: GUIState) {
     this.renderer = new WebGLRenderer({ canvas });
@@ -71,10 +72,10 @@ export class AdversaryDriver {
 
   setState(state: GUIState) {
     this.state = state;
-    this.duotoneEffect?.material.update(state);
+    this.gradientEffect?.material.update(state);
     if (this.adversaryMaterial != null) {
-      if (state.duoToneEnabled) {
-        this.adversaryMaterial.map = this.duotoneEffect.texture;
+      if (state.gradientEnabled) {
+        this.adversaryMaterial.map = this.gradientEffect.texture;
       } else {
         this.adversaryMaterial.map = this.textureBase!;
       }
@@ -111,21 +112,22 @@ export class AdversaryDriver {
       this.scene.remove(this.pointCloud);
     }
     this.textureBase = textureBase;
-    const { texture: displacementMap, imageData, maxBrightness } = this.createDisplacementMap(
+    const { texture: displacementMap, imageData, maxBrightness, minBrightness } = this.createDisplacementMap(
       textureBase
     )!;
     this.maxBrightness = maxBrightness;
-    this.duotoneEffect = new DuotoneEffect(textureBase, this.state, maxBrightness);
+    this.minBrightness = minBrightness;
+    this.gradientEffect = new GradientEffect(textureBase, this.state, maxBrightness, minBrightness);
     this.adversaryMaterial = new MeshStandardMaterial({
-      map: this.duotoneEffect.texture,
+      map: this.gradientEffect.texture,
       displacementMap,
       displacementScale: 0,
       transparent: true,
       roughness: 1,
       metalness: 0,
     });
-    if (this.state.duoToneEnabled) {
-      this.adversaryMaterial.map = this.duotoneEffect.texture;
+    if (this.state.gradientEnabled) {
+      this.adversaryMaterial.map = this.gradientEffect.texture;
     } else {
       this.adversaryMaterial.map = this.textureBase!;
     }
@@ -178,8 +180,8 @@ export class AdversaryDriver {
     if (this.state.mode === "particles") {
       this.pointCloud?.animate();
     }
-    this.duotoneEffect?.material.update(this.state);
-    this.duotoneEffect?.render(this.renderer);
+    this.gradientEffect?.material.update(this.state);
+    this.gradientEffect?.render(this.renderer);
     this.renderer.render(this.scene, this.camera);
   };
 
@@ -189,6 +191,7 @@ export class AdversaryDriver {
     canvas.width = image.width / 15;
     canvas.height = image.height / 15;
     var maxBrightness = 0;
+    var minBrightness = 1;
 
     const context = canvas.getContext("2d");
     if (context) {
@@ -201,13 +204,14 @@ export class AdversaryDriver {
           b = imageData.data[i + 2] / 255;
         const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
         maxBrightness = Math.max(brightness, maxBrightness);
+        minBrightness = Math.min(brightness, minBrightness);
         // imageData.data[i] = imageData.data[i + 1] = imageData.data[
         //   i + 2
         // ] = Math.floor(brightness * 255);
       }
       // context.putImageData(imageData, 0, 0);
       const texture = new CanvasTexture(canvas);
-      return { texture, imageData, maxBrightness };
+      return { texture, imageData, maxBrightness, minBrightness };
     }
   }
 

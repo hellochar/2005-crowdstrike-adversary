@@ -4,7 +4,8 @@ import DatGui, {
   DatColor,
   DatFolder,
   DatNumber,
-  DatSelect
+  DatSelect,
+  DatString
 } from "react-dat-gui";
 import "react-dat-gui/dist/index.css";
 import { AdversaryRendering } from "./AdversaryRendering";
@@ -14,12 +15,10 @@ import { ImageDropzone } from "./ImageDropzone";
 export interface GUIState {
   mode: "heightmap" | "particles";
   background: string;
-  ambientLight: string;
-  directionalLight: string;
-  duoToneLight: string;
-  duoToneDark: string;
-  duoToneEnabled: boolean;
+  gradient: string;
+  gradientEnabled: boolean;
   growLength: number;
+  gradientTransparency: boolean;
 }
 
 function App() {
@@ -28,11 +27,9 @@ function App() {
     mode: "heightmap",
     background: "#ffffff",
     growLength: 50,
-    ambientLight: "#535353",
-    directionalLight: "#d2d2d2",
-    duoToneEnabled: true,
-    duoToneLight: "#317671",
-    duoToneDark: "#772E49",
+    gradientEnabled: true,
+    gradient: "#131B1D #31474D #FC0000 #ABABAB #FFFFFF",
+    gradientTransparency: true,
   });
   return (
     <div className="App">
@@ -48,10 +45,10 @@ function App() {
           max={999}
           step={10}
         />
-        <DatFolder closed={false} title={"Duo Tone"}>
-          <DatBoolean path="duoToneEnabled" label="Duo Tone Enabled?" />
-          <DatColor path="duoToneLight" label="Duo Tone Light" />
-          <DatColor path="duoToneDark" label="Duo Tone Dark" />
+        <DatFolder closed={false} title={"Gradient"}>
+          <DatBoolean path="gradientEnabled" label="Gradient Enabled?" />
+          <DatString path="gradient" label="Gradient" />
+          <DatBoolean path="gradientTransparency" label="Transparency?" />
         </DatFolder>
       </DatGui>
     </div>
