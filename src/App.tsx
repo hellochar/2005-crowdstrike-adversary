@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import DatGui, {
   DatBoolean,
   DatColor,
@@ -14,6 +14,7 @@ import { ImageDropzone } from "./ImageDropzone";
 
 export interface GUIState {
   mode: "heightmap" | "particles";
+  particleDistortion: "messycircle" | "noiseflow" | "sphere";
   background: string;
   gradient: string;
   gradientEnabled: boolean;
@@ -21,22 +22,29 @@ export interface GUIState {
   gradientTransparency: boolean;
 }
 
+export const STATE: GUIState = {
+  mode: "heightmap",
+  particleDistortion: "noiseflow",
+  background: "#ffffff",
+  growLength: 50,
+  gradientEnabled: true,
+  gradient: "#131B1D #31474D #FC0000 #ABABAB #FFFFFF",
+  gradientTransparency: true,
+}
+
 function App() {
   const [img, setImage] = useState<HTMLImageElement>();
-  const [state, setState] = useState<GUIState>({
-    mode: "heightmap",
-    background: "#ffffff",
-    growLength: 50,
-    gradientEnabled: true,
-    gradient: "#131B1D #31474D #FC0000 #ABABAB #FFFFFF",
-    gradientTransparency: true,
-  });
+  const [state, setState] = useState<GUIState>(STATE);
+  useEffect(() => {
+    Object.assign(STATE, state);
+  }, [state]);
   return (
     <div className="App">
       <AdversaryRendering img={img} state={state} />
       <ImageDropzone onGotImage={setImage} />
       <DatGui data={state} onUpdate={setState}>
         <DatSelect path="mode" label="Mode" options={["heightmap", "particles"]} />
+        <DatSelect path="particleDistortion" label="Particle Distortion" options={["noiseflow", "sphere", "messycircle"]} />
         <DatColor path="background" label="Background" />
         <DatNumber
           path="growLength"

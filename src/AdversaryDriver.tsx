@@ -112,7 +112,7 @@ export class AdversaryDriver {
       this.scene.remove(this.pointCloud);
     }
     this.textureBase = textureBase;
-    const { texture: displacementMap, imageData, maxBrightness, minBrightness } = this.createDisplacementMap(
+    const { texture: displacementMap, maxBrightness, minBrightness } = this.createDisplacementMap(
       textureBase
     )!;
     this.maxBrightness = maxBrightness;
@@ -132,7 +132,7 @@ export class AdversaryDriver {
       this.adversaryMaterial.map = this.textureBase!;
     }
     this.adversary = new Mesh(this.geom, this.adversaryMaterial);
-    this.pointCloud = new AdversaryPointCloud(imageData);
+    this.pointCloud = new AdversaryPointCloud(textureBase);
     if (this.state.mode === "heightmap") {
       this.scene.add(this.adversary);
     } else {
@@ -185,34 +185,23 @@ export class AdversaryDriver {
     this.renderer.render(this.scene, this.camera);
   };
 
-  private createDisplacementMap(texture: Texture) {
-    const image = texture.image as HTMLImageElement;
-    var canvas = document.createElement("canvas");
-    canvas.width = image.width / 15;
-    canvas.height = image.height / 15;
+  private createDisplacementMap(source: Texture) {
+    const { imageData, canvas } = downsampledImageData(source.image as HTMLImageElement, 256);
     var maxBrightness = 0;
     var minBrightness = 1;
 
-    const context = canvas.getContext("2d");
-    if (context) {
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      const { width, height } = canvas;
-      const imageData = context.getImageData(0, 0, width, height);
-      for (let i = 0; i < imageData.data.length; i += 4) {
-        const r = imageData.data[i] / 255,
-          g = imageData.data[i + 1] / 255,
-          b = imageData.data[i + 2] / 255;
-        const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        maxBrightness = Math.max(brightness, maxBrightness);
-        minBrightness = Math.min(brightness, minBrightness);
-        // imageData.data[i] = imageData.data[i + 1] = imageData.data[
-        //   i + 2
-        // ] = Math.floor(brightness * 255);
-      }
-      // context.putImageData(imageData, 0, 0);
-      const texture = new CanvasTexture(canvas);
-      return { texture, imageData, maxBrightness, minBrightness };
+    for (let i = 0; i < imageData.data.length; i += 4) {
+      const r = imageData.data[i] / 255,
+        g = imageData.data[i + 1] / 255,
+        b = imageData.data[i + 2] / 255;
+      const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      maxBrightness = Math.max(brightness, maxBrightness);
+      minBrightness = Math.min(brightness, minBrightness);
+      imageData.data[i] = imageData.data[i + 1] = imageData.data[i + 2] = brightness;
     }
+    // context.putImageData(imageData, 0, 0);
+    const texture = new CanvasTexture(canvas);
+    return { texture, imageData, maxBrightness, minBrightness };
   }
 
   private generateDisplacementMappedGeometry(image: HTMLImageElement) {
@@ -265,4 +254,16 @@ export class AdversaryDriver {
       return geom;
     }
   }
+}
+
+export function downsampledImageData(image: HTMLImageElement, width: number) {
+  var canvas = document.createElement("canvas");
+  const height = image.height / image.width * width;
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d")!;
+  context.drawImage(image, 0, 0, width, height);
+  const imageData = context.getImageData(0, 0, width, height);
+  return { canvas, imageData };
 }
