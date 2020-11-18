@@ -8,6 +8,7 @@ import {
 } from "three";
 import { Pass } from "three/examples/jsm/postprocessing/Pass";
 import { GUIState } from "./App";
+import { glsl } from "./glsl";
 
 export class GradientEffect {
   public get texture() {
@@ -118,14 +119,3 @@ void main() {
   }
 }
 `;
-
-function glsl(literals: TemplateStringsArray, ...placeholders: string[]) {
-  let result = "";
-  for (let i = 0; i < placeholders.length; i++) {
-    result += literals[i];
-    result += placeholders[i];
-  }
-
-  result += literals[literals.length - 1];
-  return result;
-}

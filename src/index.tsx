@@ -1,14 +1,25 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import ReactDOM from "react-dom";
+import { HashRouter, Route, Switch } from "react-router-dom";
+import App from "./App";
+import AppPixelBleed from "./AppPixelBleed";
+import "./index.css";
+import reportWebVitals from "./reportWebVitals";
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <HashRouter>
+      <Switch>
+        <Route path="/pixelbleed">
+          <AppPixelBleed />
+        </Route>
+        <Route>
+          <App />
+        </Route>
+      </Switch>
+    </HashRouter>
   </React.StrictMode>,
-  document.getElementById('root')
+  document.getElementById("root")
 );
 
 // If you want to start measuring performance in your app, pass a function
