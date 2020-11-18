@@ -127,10 +127,9 @@ export class AdversaryPointCloud extends Points {
       Math.cos(angle) * 80 + perlin2(i / 10, time) * 6 - 3,
       Math.sin(angle) * 80 + perlin2(i / 10 + 1.953, time + 399) * 6 - 3,
       this.originalPositions[i].z +
-        50 +
-        50 *
+        6 *
           Math.sin(
-            angle * 24 + time * 2.5
+            angle * 8 + time * 2.5
           )
     );
   }
