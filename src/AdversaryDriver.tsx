@@ -7,9 +7,7 @@ import {
   MathUtils,
   Mesh,
   MeshStandardMaterial,
-
   PerspectiveCamera,
-
   PlaneGeometry,
   Scene,
   ShaderMaterial,
@@ -20,6 +18,7 @@ import {
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { Pass } from "three/examples/jsm/postprocessing/Pass";
+import { GUIState } from "./App";
 import { smoothstep } from "./smoothstep";
 
 export class AdversaryDriver {
@@ -33,8 +32,10 @@ export class AdversaryDriver {
   geom = new PlaneGeometry(200, 200, 512, 512);
   textureBase?: Texture;
   duotoneEffect!: DuotoneEffect;
+  ambientLight: AmbientLight;
+  directionalLight: DirectionalLight;
 
-  constructor(public canvas: HTMLCanvasElement) {
+  constructor(public canvas: HTMLCanvasElement, private state: GUIState) {
     this.renderer = new WebGLRenderer({ canvas });
     this.renderer.setPixelRatio(window.devicePixelRatio);
 
@@ -53,10 +54,11 @@ export class AdversaryDriver {
     this.handleWindowResize();
     window.addEventListener("resize", this.handleWindowResize);
 
-    this.scene.add(new AmbientLight(0x404040, 1.3));
-    const directionalLight = new DirectionalLight(0xb2b3a1, 1.3);
-    directionalLight.position.set(0, 0, 10);
-    this.scene.add(directionalLight);
+    this.ambientLight = new AmbientLight();
+    this.scene.add(this.ambientLight);
+    this.directionalLight = new DirectionalLight();
+    this.directionalLight.position.set(0, 0, 10);
+    this.scene.add(this.directionalLight);
     this.scene.background = new Color(1, 1, 1);
 
     // const mesh = new Mesh(
@@ -70,6 +72,7 @@ export class AdversaryDriver {
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.autoRotate = true;
 
+    this.setState(state);
     requestAnimationFrame(this.animate);
   }
 
@@ -81,27 +84,44 @@ export class AdversaryDriver {
     this.recreateAdversary(texture);
   }
 
+  setState(state: GUIState) {
+    this.state = state;
+    this.duotoneEffect?.material.update(state);
+    if (this.adversaryMaterial != null) {
+      if (state.duoToneEnabled) {
+        this.adversaryMaterial.map = this.duotoneEffect.texture;
+      } else {
+        this.adversaryMaterial.map = this.textureBase!;
+      }
+      this.adversaryMaterial.needsUpdate = true;
+    }
+    this.ambientLight.color.set(state.ambientLight);
+    this.directionalLight.color.set(state.directionalLight);
+    (this.scene.background as Color).set(state.background);
+  }
+
   private recreateAdversary(textureBase: Texture) {
     if (this.adversary != null) {
       this.scene.remove(this.adversary);
       this.adversaryMaterial?.dispose();
     }
     this.textureBase = textureBase;
-    this.duotoneEffect = new DuotoneEffect(textureBase);
-    this.duotoneEffect.render(this.renderer);
-    const displacementMap = this.createDisplacementMap(
-      textureBase,
-    );
+    this.duotoneEffect = new DuotoneEffect(textureBase, this.state);
+    const displacementMap = this.createDisplacementMap(textureBase);
     this.adversaryMaterial = new MeshStandardMaterial({
       side: DoubleSide,
       map: this.duotoneEffect.texture,
       displacementMap,
       displacementScale: 0,
-      // displacementScale: 50,
       // bumpMap: this.textureBase,
       roughness: 1,
       metalness: 0,
     });
+    if (this.state.duoToneEnabled) {
+      this.adversaryMaterial.map = this.duotoneEffect.texture;
+    } else {
+      this.adversaryMaterial.map = this.textureBase!;
+    }
     // const geom = this.generateDisplacementMappedGeometry(texture.image as HTMLImageElement);
     this.adversary = new Mesh(
       // geom,
@@ -135,8 +155,12 @@ export class AdversaryDriver {
     this.controls.update();
     if (this.adversaryMaterial != null) {
       this.adversaryMaterial.displacementScale =
-        smoothstep(0, 5000, performance.now() - this.timeStarted) * 50;
+        smoothstep(0, 5000, performance.now() - this.timeStarted) * this.state.growLength;
     }
+    if (this.textureBase != null) {
+      this.textureBase.needsUpdate = true;
+    }
+    this.duotoneEffect?.render(this.renderer);
     this.renderer.render(this.scene, this.camera);
   };
 
@@ -225,14 +249,14 @@ class DuotoneEffect {
 
   target: WebGLRenderTarget;
   private fsQuad: Pass.FullScreenQuad;
-  private material: ShaderMaterial;
+  public readonly material: DuoToneShaderMaterial;
 
-  constructor(public source: Texture) {
+  constructor(public source: Texture, state: GUIState) {
     this.target = new WebGLRenderTarget(
       source.image.width,
-      source.image.height,
+      source.image.height
     );
-    this.material = DuoToneShaderMaterial;
+    this.material = new DuoToneShaderMaterial(state);
     this.fsQuad = new Pass.FullScreenQuad(this.material);
   }
 
@@ -245,7 +269,7 @@ class DuotoneEffect {
 
 function glsl(literals: TemplateStringsArray, ...placeholders: string[]) {
   let result = "";
-  for(let i = 0; i < placeholders.length; i++) {
+  for (let i = 0; i < placeholders.length; i++) {
     result += literals[i];
     result += placeholders[i];
   }
@@ -267,6 +291,7 @@ const fragmentShader = glsl`
 uniform vec3 colorLight;
 uniform vec3 colorDark;
 uniform float crush;
+uniform bool enabled;
 
 uniform sampler2D tDiffuse;
 varying vec2 vUv;
@@ -274,21 +299,38 @@ varying vec2 vUv;
 void main() {
   vec4 baseColor = texture2D( tDiffuse, vUv );
 
-  float grey = dot(baseColor.rgb, vec3(0.299, 0.587, 0.114));
-  grey = smoothstep(crush, 1.0 - crush, grey);
+  if (enabled) {
+    float grey = dot(baseColor.rgb, vec3(0.299, 0.587, 0.114));
+    grey = smoothstep(crush, 1.0 - crush, grey);
 
-  vec3 outColor = mix(colorDark, colorLight, grey);
+    vec3 outColor = mix(colorDark, colorLight, grey);
 
-  gl_FragColor = vec4(outColor, 1.0);
+    gl_FragColor = vec4(outColor, 1.0);
+  } else {
+    gl_FragColor = baseColor;
+  }
 }
 `;
 
-const DuoToneShaderMaterial = new ShaderMaterial({
-  uniforms: {
-    colorLight: { value: new Color(0x317671) },
-    colorDark: { value: new Color(0x772E49) },
-    crush: { value: 0.0, },
-  },
-  vertexShader: vertexShader,
-  fragmentShader: fragmentShader,
-});
+class DuoToneShaderMaterial extends ShaderMaterial {
+  constructor(state: GUIState) {
+    super({
+      uniforms: {
+        colorLight: { value: new Color(state.duoToneLight) },
+        colorDark: { value: new Color(state.duoToneDark) },
+        crush: { value: 0.0 },
+        enabled: { value: true }
+      },
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
+    });
+    this.needsUpdate = true;
+  }
+
+  update(state: GUIState) {
+    this.uniforms.colorLight.value.set(state.duoToneLight);
+    this.uniforms.colorDark.value.set(state.duoToneDark);
+    this.uniforms.enabled.value = state.duoToneEnabled;
+    this.needsUpdate = true;
+  }
+}
