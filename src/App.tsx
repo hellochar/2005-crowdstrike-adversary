@@ -41,8 +41,6 @@ function App() {
       <DatGui data={state} onUpdate={setState}>
         <DatSelect path="mode" label="Mode" options={["heightmap", "particles"]} />
         <DatColor path="background" label="Background" />
-        <DatColor path="ambientLight" label="Ambient Light" />
-        <DatColor path="directionalLight" label="Directional Light" />
         <DatNumber
           path="growLength"
           label="Grow Length"
