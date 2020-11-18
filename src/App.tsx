@@ -3,7 +3,8 @@ import DatGui, {
   DatBoolean,
   DatColor,
   DatFolder,
-  DatNumber
+  DatNumber,
+  DatSelect
 } from "react-dat-gui";
 import "react-dat-gui/dist/index.css";
 import { AdversaryRendering } from "./AdversaryRendering";
@@ -11,6 +12,7 @@ import "./App.css";
 import { ImageDropzone } from "./ImageDropzone";
 
 export interface GUIState {
+  mode: "heightmap" | "particles";
   background: string;
   ambientLight: string;
   directionalLight: string;
@@ -23,6 +25,7 @@ export interface GUIState {
 function App() {
   const [img, setImage] = useState<HTMLImageElement>();
   const [state, setState] = useState<GUIState>({
+    mode: "heightmap",
     background: "#ffffff",
     growLength: 50,
     ambientLight: "#535353",
@@ -36,6 +39,7 @@ function App() {
       <AdversaryRendering img={img} state={state} />
       <ImageDropzone onGotImage={setImage} />
       <DatGui data={state} onUpdate={setState}>
+        <DatSelect path="mode" label="Mode" options={["heightmap", "particles"]} />
         <DatColor path="background" label="Background" />
         <DatColor path="ambientLight" label="Ambient Light" />
         <DatColor path="directionalLight" label="Directional Light" />
