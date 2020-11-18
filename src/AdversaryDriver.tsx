@@ -184,7 +184,9 @@ export class AdversaryDriver {
     // if (this.textureBase != null) {
     //   this.textureBase.needsUpdate = true;
     // }
-    this.pointCloud?.animate();
+    if (this.state.mode === "particles") {
+      this.pointCloud?.animate();
+    }
     this.duotoneEffect?.material.update(this.state);
     this.duotoneEffect?.render(this.renderer);
     this.renderer.render(this.scene, this.camera);
