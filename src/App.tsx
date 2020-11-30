@@ -17,6 +17,8 @@ export interface GUIState {
   particleDistortion: "messycircle" | "noiseflow" | "sphere";
   noiseIntensity: number;
   scanlineIntensity: number;
+  parallaxEnabled: boolean;
+  parallaxIntensity: number;
   background: string;
   gradient: string;
   gradientEnabled: boolean;
@@ -29,12 +31,14 @@ export const STATE: GUIState = {
   particleDistortion: "noiseflow",
   background: "#ffffff",
   growLength: 50,
-  noiseIntensity: 0.35,
+  noiseIntensity: 0.25,
   scanlineIntensity: 0.0,
+  parallaxEnabled: true,
+  parallaxIntensity: 0.5,
   gradientEnabled: true,
   gradient: "#131B1D #31474D #FC0000 #ABABAB #FFFFFF",
   gradientTransparency: true,
-}
+};
 
 function App() {
   const [img, setImage] = useState<HTMLImageElement>();
@@ -47,8 +51,16 @@ function App() {
       <AdversaryRendering img={img} state={state} />
       <ImageDropzone onGotImage={setImage} />
       <DatGui data={state} onUpdate={setState}>
-        <DatSelect path="mode" label="Mode" options={["heightmap", "particles"]} />
-        <DatSelect path="particleDistortion" label="Particle Distortion" options={["noiseflow", "sphere", "messycircle"]} />
+        <DatSelect
+          path="mode"
+          label="Mode"
+          options={["heightmap", "particles"]}
+        />
+        <DatSelect
+          path="particleDistortion"
+          label="Particle Distortion"
+          options={["noiseflow", "sphere", "messycircle"]}
+        />
         <DatColor path="background" label="Background" />
         <DatNumber
           path="growLength"
@@ -57,20 +69,26 @@ function App() {
           max={999}
           step={10}
         />
-        <DatNumber
-          path="noiseIntensity"
-          label="Noise"
-          min={0}
-          max={1}
-          step={0.01}
-        />
-        <DatNumber
-          path="scanlineIntensity"
-          label="Scanlines"
-          min={0}
-          max={1}
-          step={0.01}
-        />
+        <DatFolder closed={false} title="Postprocessing">
+          <DatNumber
+            path="noiseIntensity"
+            label="Noise"
+            min={0}
+            max={1}
+            step={0.01}
+          />
+          <DatNumber
+            path="scanlineIntensity"
+            label="Scanlines"
+            min={0}
+            max={1}
+            step={0.01}
+          />
+        </DatFolder>
+        <DatFolder closed={false} title="Parallax">
+          <DatBoolean path="parallaxEnabled" label="Parallax Enabled?" />
+          <DatNumber path="parallaxIntensity" label="Intensity" min={0} max={1} step={0.01} />
+        </DatFolder>
         <DatFolder closed={false} title={"Gradient"}>
           <DatBoolean path="gradientEnabled" label="Gradient Enabled?" />
           <DatString path="gradient" label="Gradient" />

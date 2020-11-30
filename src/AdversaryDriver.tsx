@@ -1,5 +1,6 @@
 import {
   AmbientLight,
+
   CanvasTexture,
   Color,
   DoubleSide,
@@ -11,15 +12,16 @@ import {
   Scene,
   Texture,
   TextureLoader,
+  Vector2,
   WebGLRenderer
 } from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 import { FilmPass } from "three/examples/jsm/postprocessing/FilmPass";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { AdversaryPointCloud } from "./AdversaryPointCloud";
 import { GUIState } from "./App";
 import { GradientEffect } from "./GradientEffect";
+import { OrbitControls } from "./OrbitControls";
 import { smoothstep } from "./smoothstep";
 
 export class AdversaryDriver {
@@ -39,7 +41,8 @@ export class AdversaryDriver {
   minBrightness!: number;
   composer: EffectComposer;
   filmPass: FilmPass;
-
+  // normalized in [-1, 1]
+  mouse = new Vector2();
   constructor(public canvas: HTMLCanvasElement, private state: GUIState) {
     this.renderer = new WebGLRenderer({ canvas });
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -55,6 +58,8 @@ export class AdversaryDriver {
     this.handleWindowResize();
     window.addEventListener("resize", this.handleWindowResize);
 
+    window.addEventListener("mousemove", this.handleMouseMove);
+
     this.scene.add(new AmbientLight(0xffffff));
     this.scene.background = new Color(1, 1, 1);
 
@@ -69,6 +74,14 @@ export class AdversaryDriver {
 
     this.setState(state);
     requestAnimationFrame(this.animate);
+  }
+
+  handleMouseMove = (event: MouseEvent) => {
+    event.preventDefault();
+    const aspect = window.innerWidth / window.innerHeight;
+
+    this.mouse.x = (event.clientX / window.innerWidth * 2 - 1) * aspect;
+    this.mouse.y = (1 - event.clientY / window.innerHeight) * 2 - 1;
   }
 
   setImage(img: HTMLImageElement) {
@@ -177,7 +190,7 @@ export class AdversaryDriver {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
 
     const aspect = window.innerWidth / window.innerHeight;
-    const halfHeight = 100;
+    const halfHeight = 150;
     this.camera.left = -halfHeight * aspect;
     this.camera.right = halfHeight * aspect;
     this.camera.top = halfHeight;
@@ -187,7 +200,19 @@ export class AdversaryDriver {
 
   animate = () => {
     requestAnimationFrame(this.animate);
+    if (this.state.parallaxEnabled) {
+      const controls = this.controls as any;
+      // reset rotation but don't reset zoom
+      controls.target.copy( controls.target0 );
+      controls.object.position.copy( controls.position0 );
+
+      const parallaxAmount = Math.PI / 4 * this.state.parallaxIntensity;
+      controls.rotateLeft(-parallaxAmount * this.mouse.x);
+      controls.rotateUp(parallaxAmount * this.mouse.y);
+    }
     this.controls.update();
+    // this.camera.rotation.z += ;
+    // this.camera.rotation.x += parallaxAmount * this.mouse.y;
     if (this.adversaryMaterial != null && this.adversary != null) {
       const zScale =
         (smoothstep(0, 5000, performance.now() - this.timeStarted) *
