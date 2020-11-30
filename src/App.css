@@ -61,3 +61,8 @@ canvas {
 .react-dat-gui {
   width: 400px;
 }
+
+.App.hide-ui .dropzone,
+.App.hide-ui .react-dat-gui {
+  display: none;
+}

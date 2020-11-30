@@ -47,11 +47,23 @@ export const STATE: GUIState = {
 function App() {
   const [img, setImage] = useState<HTMLImageElement>();
   const [state, setState] = useState<GUIState>(STATE);
+  const [showUI, setShowUI] = useState(true);
   useEffect(() => {
     Object.assign(STATE, state);
   }, [state]);
+  useEffect(() => {
+    const handleKeyup = (event: KeyboardEvent) => {
+      if (event.code === "KeyZ") {
+        setShowUI((show) => !show);
+      }
+    };
+    window.addEventListener("keyup", handleKeyup);
+    return () => {
+      window.removeEventListener("keyup", handleKeyup);
+    }
+  })
   return (
-    <div className="App">
+    <div className={`App${!showUI ? " hide-ui" : ""}`}>
       <AdversaryRendering img={img} state={state} />
       <ImageDropzone onGotImage={setImage} />
       <DatGui data={state} onUpdate={setState}>
