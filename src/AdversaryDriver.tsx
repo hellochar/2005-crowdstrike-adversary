@@ -10,6 +10,7 @@ import {
   OrthographicCamera,
   PlaneGeometry,
   Scene,
+  Spherical,
   Texture,
   TextureLoader,
   Vector2,
@@ -43,6 +44,7 @@ export class AdversaryDriver {
   filmPass: FilmPass;
   // normalized in [-1, 1]
   mouse = new Vector2();
+  spherical0: Spherical;
   constructor(public canvas: HTMLCanvasElement, private state: GUIState) {
     this.renderer = new WebGLRenderer({ canvas });
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -66,6 +68,8 @@ export class AdversaryDriver {
     this.loadDefaultImage();
 
     this.controls = new OrbitControls(this.camera, this.canvas);
+    this.spherical0 = new Spherical();
+    this.spherical0.setFromVector3(this.camera.position);
 
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
@@ -82,6 +86,12 @@ export class AdversaryDriver {
 
     this.mouse.x = (event.clientX / window.innerWidth * 2 - 1) * aspect;
     this.mouse.y = (1 - event.clientY / window.innerHeight) * 2 - 1;
+
+    if (this.state.parallaxEnabled && this.state.parallaxRespondsToMouseMovement) {
+        const parallaxAmount = Math.PI / 4 * this.state.parallaxIntensity / window.innerHeight * 3;
+        (this.controls as any).rotateLeft(-parallaxAmount * event.movementX);
+        (this.controls as any).rotateUp(-parallaxAmount * event.movementY);
+    }
   }
 
   setImage(img: HTMLImageElement) {
@@ -202,13 +212,21 @@ export class AdversaryDriver {
     requestAnimationFrame(this.animate);
     if (this.state.parallaxEnabled) {
       const controls = this.controls as any;
-      // reset rotation but don't reset zoom
-      controls.target.copy( controls.target0 );
-      controls.object.position.copy( controls.position0 );
-
-      const parallaxAmount = Math.PI / 4 * this.state.parallaxIntensity;
-      controls.rotateLeft(-parallaxAmount * this.mouse.x);
-      controls.rotateUp(parallaxAmount * this.mouse.y);
+      if (this.state.parallaxRespondsToMouseMovement) {
+        // lerp towards position0 
+        var damping = 0.1 * (2 ** (this.state.parallaxReturnSpeed - 3));
+        var spherical = new Spherical();
+        spherical.setFromVector3(this.camera.position);
+        controls.rotateLeft((spherical.theta - this.spherical0.theta) * damping);
+        controls.rotateUp((spherical.phi - this.spherical0.phi) * damping);
+      } else {
+        // reset rotation but don't reset zoom
+        controls.target.copy( controls.target0 );
+        controls.object.position.copy( controls.position0 );
+        const parallaxAmount = Math.PI / 4 * this.state.parallaxIntensity;
+        controls.rotateLeft(-parallaxAmount * this.mouse.x);
+        controls.rotateUp(parallaxAmount * this.mouse.y);
+      }
     }
     this.controls.update();
     // this.camera.rotation.z += ;

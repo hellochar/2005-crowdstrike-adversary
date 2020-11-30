@@ -18,6 +18,8 @@ export interface GUIState {
   noiseIntensity: number;
   scanlineIntensity: number;
   parallaxEnabled: boolean;
+  parallaxRespondsToMouseMovement: boolean;
+  parallaxReturnSpeed: number;
   parallaxIntensity: number;
   background: string;
   gradient: string;
@@ -34,6 +36,8 @@ export const STATE: GUIState = {
   noiseIntensity: 0.25,
   scanlineIntensity: 0.0,
   parallaxEnabled: true,
+  parallaxRespondsToMouseMovement: false,
+  parallaxReturnSpeed: 3,
   parallaxIntensity: 0.5,
   gradientEnabled: true,
   gradient: "#131B1D #31474D #FC0000 #ABABAB #FFFFFF",
@@ -66,8 +70,8 @@ function App() {
           path="growLength"
           label="Grow Length"
           min={0}
-          max={999}
-          step={10}
+          max={500}
+          step={5}
         />
         <DatFolder closed={false} title="Postprocessing">
           <DatNumber
@@ -88,6 +92,8 @@ function App() {
         <DatFolder closed={false} title="Parallax">
           <DatBoolean path="parallaxEnabled" label="Parallax Enabled?" />
           <DatNumber path="parallaxIntensity" label="Intensity" min={0} max={1} step={0.01} />
+          <DatBoolean path="parallaxRespondsToMouseMovement" label="Returns to 0?" />
+          <DatNumber path="parallaxReturnSpeed" label="Return to 0 Speed" min={0} max={6} step={0.1} />
         </DatFolder>
         <DatFolder closed={false} title={"Gradient"}>
           <DatBoolean path="gradientEnabled" label="Gradient Enabled?" />
