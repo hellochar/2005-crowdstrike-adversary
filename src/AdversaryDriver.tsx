@@ -1,13 +1,12 @@
 import {
   AmbientLight,
-
   CanvasTexture,
   Color,
+  DoubleSide,
   MathUtils,
   Mesh,
   MeshStandardMaterial,
   OrthographicCamera,
-
   PlaneGeometry,
   Scene,
   Texture,
@@ -15,6 +14,9 @@ import {
   WebGLRenderer
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { FilmPass } from "three/examples/jsm/postprocessing/FilmPass";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { AdversaryPointCloud } from "./AdversaryPointCloud";
 import { GUIState } from "./App";
 import { GradientEffect } from "./GradientEffect";
@@ -35,6 +37,8 @@ export class AdversaryDriver {
   // in [0 to 1]
   maxBrightness!: number;
   minBrightness!: number;
+  composer: EffectComposer;
+  filmPass: FilmPass;
 
   constructor(public canvas: HTMLCanvasElement, private state: GUIState) {
     this.renderer = new WebGLRenderer({ canvas });
@@ -58,6 +62,11 @@ export class AdversaryDriver {
 
     this.controls = new OrbitControls(this.camera, this.canvas);
 
+    this.composer = new EffectComposer(this.renderer);
+    this.composer.addPass(new RenderPass(this.scene, this.camera));
+    this.filmPass = new FilmPass(0, 0, 4096, 0);
+    this.composer.addPass(this.filmPass);
+
     this.setState(state);
     requestAnimationFrame(this.animate);
   }
@@ -72,6 +81,8 @@ export class AdversaryDriver {
 
   setState(state: GUIState) {
     this.state = state;
+    (this.filmPass.uniforms as any).nIntensity.value = state.noiseIntensity;
+    (this.filmPass.uniforms as any).sIntensity.value = state.scanlineIntensity;
     this.gradientEffect?.material.update(state);
     if (this.adversaryMaterial != null) {
       if (state.gradientEnabled) {
@@ -112,13 +123,21 @@ export class AdversaryDriver {
       this.scene.remove(this.pointCloud);
     }
     this.textureBase = textureBase;
-    const { texture: displacementMap, maxBrightness, minBrightness } = this.createDisplacementMap(
-      textureBase
-    )!;
+    const {
+      texture: displacementMap,
+      maxBrightness,
+      minBrightness,
+    } = this.createDisplacementMap(textureBase)!;
     this.maxBrightness = maxBrightness;
     this.minBrightness = minBrightness;
-    this.gradientEffect = new GradientEffect(textureBase, this.state, maxBrightness, minBrightness);
+    this.gradientEffect = new GradientEffect(
+      textureBase,
+      this.state,
+      maxBrightness,
+      minBrightness
+    );
     this.adversaryMaterial = new MeshStandardMaterial({
+      side: DoubleSide,
       map: this.gradientEffect.texture,
       displacementMap,
       displacementScale: 0,
@@ -139,7 +158,7 @@ export class AdversaryDriver {
       this.scene.add(this.pointCloud);
     }
 
-    this.renderer.render(this.scene, this.camera);
+    this.composer.render();
     this.timeStarted = performance.now();
   }
 
@@ -170,7 +189,10 @@ export class AdversaryDriver {
     requestAnimationFrame(this.animate);
     this.controls.update();
     if (this.adversaryMaterial != null && this.adversary != null) {
-      const zScale = smoothstep(0, 5000, performance.now() - this.timeStarted) * this.state.growLength / this.maxBrightness;
+      const zScale =
+        (smoothstep(0, 5000, performance.now() - this.timeStarted) *
+          this.state.growLength) /
+        this.maxBrightness;
       this.adversaryMaterial.displacementScale = zScale;
       this.adversary.position.z = -zScale / 2;
     }
@@ -182,11 +204,14 @@ export class AdversaryDriver {
     }
     this.gradientEffect?.material.update(this.state);
     this.gradientEffect?.render(this.renderer);
-    this.renderer.render(this.scene, this.camera);
+    this.composer.render();
   };
 
   private createDisplacementMap(source: Texture) {
-    const { imageData, canvas } = downsampledImageData(source.image as HTMLImageElement, 256);
+    const { imageData, canvas } = downsampledImageData(
+      source.image as HTMLImageElement,
+      256
+    );
     var maxBrightness = 0;
     var minBrightness = 1;
 
@@ -197,7 +222,9 @@ export class AdversaryDriver {
       const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
       maxBrightness = Math.max(brightness, maxBrightness);
       minBrightness = Math.min(brightness, minBrightness);
-      imageData.data[i] = imageData.data[i + 1] = imageData.data[i + 2] = brightness;
+      imageData.data[i] = imageData.data[i + 1] = imageData.data[
+        i + 2
+      ] = brightness;
     }
     // context.putImageData(imageData, 0, 0);
     const texture = new CanvasTexture(canvas);
@@ -258,7 +285,7 @@ export class AdversaryDriver {
 
 export function downsampledImageData(image: HTMLImageElement, width: number) {
   var canvas = document.createElement("canvas");
-  const height = image.height / image.width * width;
+  const height = (image.height / image.width) * width;
   canvas.width = width;
   canvas.height = height;
 

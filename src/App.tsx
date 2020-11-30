@@ -15,6 +15,8 @@ import { ImageDropzone } from "./ImageDropzone";
 export interface GUIState {
   mode: "heightmap" | "particles";
   particleDistortion: "messycircle" | "noiseflow" | "sphere";
+  noiseIntensity: number;
+  scanlineIntensity: number;
   background: string;
   gradient: string;
   gradientEnabled: boolean;
@@ -27,6 +29,8 @@ export const STATE: GUIState = {
   particleDistortion: "noiseflow",
   background: "#ffffff",
   growLength: 50,
+  noiseIntensity: 0.35,
+  scanlineIntensity: 0.0,
   gradientEnabled: true,
   gradient: "#131B1D #31474D #FC0000 #ABABAB #FFFFFF",
   gradientTransparency: true,
@@ -52,6 +56,20 @@ function App() {
           min={0}
           max={999}
           step={10}
+        />
+        <DatNumber
+          path="noiseIntensity"
+          label="Noise"
+          min={0}
+          max={1}
+          step={0.01}
+        />
+        <DatNumber
+          path="scanlineIntensity"
+          label="Scanlines"
+          min={0}
+          max={1}
+          step={0.01}
         />
         <DatFolder closed={false} title={"Gradient"}>
           <DatBoolean path="gradientEnabled" label="Gradient Enabled?" />
