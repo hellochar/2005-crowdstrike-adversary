@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import DatGui, {
   DatBoolean,
+  DatButton,
   DatColor,
   DatFolder,
   DatNumber,
@@ -8,7 +9,7 @@ import DatGui, {
   DatString
 } from "react-dat-gui";
 import "react-dat-gui/dist/index.css";
-import { AdversaryRendering } from "./AdversaryRendering";
+import { AdversaryRendering, DRIVER } from "./AdversaryRendering";
 import "./App.css";
 import { ImageDropzone } from "./ImageDropzone";
 
@@ -31,14 +32,14 @@ export interface GUIState {
 export const STATE: GUIState = {
   mode: "heightmap",
   particleDistortion: "noiseflow",
-  background: "#ffffff",
+  background: "#808080",
   growLength: 50,
   noiseIntensity: 0.25,
   scanlineIntensity: 0.0,
-  parallaxEnabled: true,
+  parallaxEnabled: false,
+  parallaxIntensity: 0.5,
   parallaxRespondsToMouseMovement: false,
   parallaxReturnSpeed: 3,
-  parallaxIntensity: 0.5,
   gradientEnabled: true,
   gradient: "#131B1D #31474D #FC0000 #ABABAB #FFFFFF",
   gradientTransparency: true,
@@ -61,7 +62,13 @@ function App() {
     return () => {
       window.removeEventListener("keyup", handleKeyup);
     }
-  })
+  });
+  const handleCameraFrontalView = useCallback(() => {
+    DRIVER?.goFrontalView();
+  }, []);
+  const handleCameraDiagonalView = useCallback(() => {
+    DRIVER?.goDiagonalView();
+  }, []);
   return (
     <div className={`App${!showUI ? " hide-ui" : ""}`}>
       <AdversaryRendering img={img} state={state} />
@@ -103,7 +110,7 @@ function App() {
         </DatFolder>
         <DatFolder closed={false} title="Parallax">
           <DatBoolean path="parallaxEnabled" label="Parallax Enabled?" />
-          <DatNumber path="parallaxIntensity" label="Intensity" min={0} max={1} step={0.01} />
+          <DatNumber path="parallaxIntensity" label="Intensity" min={0} max={2} step={0.01} />
           <DatBoolean path="parallaxRespondsToMouseMovement" label="Returns to 0?" />
           <DatNumber path="parallaxReturnSpeed" label="Return to 0 Speed" min={0} max={6} step={0.1} />
         </DatFolder>
@@ -112,6 +119,8 @@ function App() {
           <DatString path="gradient" label="Gradient" />
           <DatBoolean path="gradientTransparency" label="Transparency?" />
         </DatFolder>
+        <DatButton label="Go to Frontal View" onClick={handleCameraFrontalView} />
+        <DatButton label="Go to Diagonal View" onClick={handleCameraDiagonalView} />
       </DatGui>
     </div>
   );

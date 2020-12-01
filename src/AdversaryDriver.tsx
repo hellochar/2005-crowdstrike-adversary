@@ -4,6 +4,7 @@ import {
   CanvasTexture,
   Color,
   DoubleSide,
+  Euler,
   MathUtils,
   Mesh,
   MeshStandardMaterial,
@@ -14,6 +15,7 @@ import {
   Texture,
   TextureLoader,
   Vector2,
+  Vector3,
   WebGLRenderer
 } from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
@@ -137,6 +139,16 @@ export class AdversaryDriver {
     }
   }
 
+  cameraTarget?: Vector3;
+  goDiagonalView() {
+    this.cameraTarget = new Vector3(0, 0, 100);
+    this.cameraTarget.applyEuler(new Euler(Math.PI / 6, Math.PI / 6));
+  }
+
+  goFrontalView() {
+    this.cameraTarget = new Vector3(0, 0, 100);
+  }
+
   private recreateAdversary(textureBase: Texture) {
     if (this.adversary != null) {
       this.scene.remove(this.adversary);
@@ -210,27 +222,14 @@ export class AdversaryDriver {
 
   animate = () => {
     requestAnimationFrame(this.animate);
-    if (this.state.parallaxEnabled) {
-      const controls = this.controls as any;
-      if (this.state.parallaxRespondsToMouseMovement) {
-        // lerp towards position0 
-        var damping = 0.1 * (2 ** (this.state.parallaxReturnSpeed - 3));
-        var spherical = new Spherical();
-        spherical.setFromVector3(this.camera.position);
-        controls.rotateLeft((spherical.theta - this.spherical0.theta) * damping);
-        controls.rotateUp((spherical.phi - this.spherical0.phi) * damping);
-      } else {
-        // reset rotation but don't reset zoom
-        controls.target.copy( controls.target0 );
-        controls.object.position.copy( controls.position0 );
-        const parallaxAmount = Math.PI / 4 * this.state.parallaxIntensity;
-        controls.rotateLeft(-parallaxAmount * this.mouse.x);
-        controls.rotateUp(parallaxAmount * this.mouse.y);
+    if (this.cameraTarget != null) {
+      this.updateCameraTarget();
+    } else {
+      if (this.state.parallaxEnabled) {
+        this.updateCameraParallax();
       }
+      this.controls.update();
     }
-    this.controls.update();
-    // this.camera.rotation.z += ;
-    // this.camera.rotation.x += parallaxAmount * this.mouse.y;
     if (this.adversaryMaterial != null && this.adversary != null) {
       const zScale =
         (smoothstep(0, 5000, performance.now() - this.timeStarted) *
@@ -239,9 +238,6 @@ export class AdversaryDriver {
       this.adversaryMaterial.displacementScale = zScale;
       this.adversary.position.z = -zScale / 2;
     }
-    // if (this.textureBase != null) {
-    //   this.textureBase.needsUpdate = true;
-    // }
     if (this.state.mode === "particles") {
       this.pointCloud?.animate();
     }
@@ -249,6 +245,39 @@ export class AdversaryDriver {
     this.gradientEffect?.render(this.renderer);
     this.composer.render();
   };
+
+  updateCameraTarget() {
+    if (this.cameraTarget != null) {
+      if (this.camera.position.distanceTo(this.cameraTarget) < 1) {
+        // we're done
+        this.camera.position.copy(this.cameraTarget);
+        this.camera.lookAt(0, 0, 0);
+        delete this.cameraTarget; 
+      } else {
+        this.camera.position.lerp(this.cameraTarget, 0.1);
+        this.camera.lookAt(0, 0, 0);
+      }
+    }
+  }
+
+  private updateCameraParallax() {
+    const controls = this.controls as any;
+    if (this.state.parallaxRespondsToMouseMovement) {
+      // lerp towards position0 
+      var damping = 0.1 * (2 ** (this.state.parallaxReturnSpeed - 3));
+      var spherical = new Spherical();
+      spherical.setFromVector3(this.camera.position);
+      controls.rotateLeft((spherical.theta - this.spherical0.theta) * damping);
+      controls.rotateUp((spherical.phi - this.spherical0.phi) * damping);
+    } else {
+      // reset rotation but don't reset zoom
+      controls.target.copy(controls.target0);
+      controls.object.position.copy(controls.position0);
+      const parallaxAmount = Math.PI / 4 * this.state.parallaxIntensity;
+      controls.rotateLeft(-parallaxAmount * this.mouse.x);
+      controls.rotateUp(parallaxAmount * this.mouse.y);
+    }
+  }
 
   private createDisplacementMap(source: Texture) {
     const { imageData, canvas } = downsampledImageData(

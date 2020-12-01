@@ -62,6 +62,12 @@ canvas {
   width: 400px;
 }
 
+.react-dat-gui .cr.button {
+  padding: 5px;
+  margin: 2px;
+  border-radius: 5px;
+}
+
 .App.hide-ui .dropzone,
 .App.hide-ui .react-dat-gui {
   display: none;
