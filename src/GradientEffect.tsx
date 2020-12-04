@@ -21,11 +21,17 @@ export class GradientEffect {
 
   constructor(public source: Texture, state: GUIState, public maxBrightness: number, public minBrightness: number) {
     this.target = new WebGLRenderTarget(
-      source.image.width,
-      source.image.height
+      2048,
+      2048,
     );
     this.material = new GradientShaderMaterial(source, state, maxBrightness, minBrightness);
     this.fsQuad = new Pass.FullScreenQuad(this.material);
+  }
+
+  setTextureBase(textureBase: Texture) {
+    this.source = textureBase;
+    this.material.uniforms.tSource.value = this.source;
+    this.material.needsUpdate = true;
   }
 
   public render(renderer: WebGLRenderer) {
@@ -51,6 +57,7 @@ class GradientShaderMaterial extends ShaderMaterial {
       fragmentShader: fragmentShader,
       transparent: true,
     });
+    console.log(minBrightness, maxBrightness);
     this.update(state);
     this.needsUpdate = true;
   }

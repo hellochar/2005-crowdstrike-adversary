@@ -28,7 +28,7 @@ export class AdversaryDriver {
   public scene: Scene;
   public camera: OrthographicCamera;
   controls: OrbitControls;
-  adversary?: AdversaryMesh;
+  adversary: AdversaryMesh;
   composer: EffectComposer;
   filmPass: FilmPass;
   // normalized in [-1, 1]
@@ -54,6 +54,11 @@ export class AdversaryDriver {
 
     this.scene.add(new AmbientLight(0xffffff));
     this.scene.background = new Color(1, 1, 1);
+
+    // this.adversary = new AdversaryMesh()
+    const adversaryMaterial = AdversaryMaterial.create(this.state);
+    this.adversary = new AdversaryMesh(adversaryMaterial);
+    this.scene.add(this.adversary);
 
     this.setAdversary("Buffalo");
 
@@ -94,14 +99,14 @@ export class AdversaryDriver {
     img.onload = function () {
       texture.needsUpdate = true;
     };
-    this.recreateAdversary(texture);
+    this.setAdversaryTexture(texture);
   }
 
   setAdversary(name: string) {
     new TextureLoader().load(
       `/2005-crowdstrike-adversary/adversaries/${name}.jpg`,
       (texture) => {
-        this.recreateAdversary(texture);
+        this.setAdversaryTexture(texture);
       },
       (event) => console.log(event),
       (event) => console.error(event)
@@ -112,7 +117,7 @@ export class AdversaryDriver {
     this.state = state;
     (this.filmPass.uniforms as any).nIntensity.value = state.noiseIntensity;
     (this.filmPass.uniforms as any).sIntensity.value = state.scanlineIntensity;
-    this.adversary?.material.setState(state);
+    this.adversary.material.setState(state);
     (this.scene.background as Color).set(state.background);
   }
 
@@ -126,15 +131,8 @@ export class AdversaryDriver {
     this.cameraTarget = new Vector3(0, 0, 100);
   }
 
-  private recreateAdversary(textureBase: Texture) {
-    if (this.adversary != null) {
-      this.scene.remove(this.adversary);
-      this.adversary.material.dispose();
-    }
-    const adversaryMaterial = AdversaryMaterial.create(textureBase, this.state);
-    this.adversary = new AdversaryMesh(adversaryMaterial);
-    this.scene.add(this.adversary);
-
+  private setAdversaryTexture(textureBase: Texture) {
+    this.adversary.material.setTextureBase(textureBase);
     this.composer.render();
   }
 

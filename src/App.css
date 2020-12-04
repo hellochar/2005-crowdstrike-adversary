@@ -77,6 +77,7 @@ canvas {
 }
 
 .App.hide-ui .dropzone,
+.App.hide-ui .adversaries-list,
 .App.hide-ui .react-dat-gui {
   display: none;
 }

@@ -32,6 +32,8 @@ export interface GUIState {
   breatheTallPointExaggeration: number;
   breatheNoiseSpeed: number;
   breatheNoiseAmount: number;
+  breatheZAmount: number;
+  breatheXYAmount: number;
 }
 
 export const STATE: GUIState = {
@@ -52,6 +54,8 @@ export const STATE: GUIState = {
   breatheTallPointExaggeration: 20,
   breatheNoiseSpeed: 0.2,
   breatheNoiseAmount: 4,
+  breatheZAmount: 0,
+  breatheXYAmount: 1,
 };
 
 function App() {
@@ -120,6 +124,8 @@ function App() {
           <DatBoolean path="gradientTransparency" label="Transparency?" />
         </DatFolder>
         <DatFolder title="Breathe" closed={true}>
+            <DatNumber label="Z Amount" path="breatheZAmount" min={-1} max={1} step={0.01} />
+            <DatNumber label="XY Amount" path="breatheXYAmount" min={-1} max={1} step={0.01} />
             <DatNumber label="Speed" path="breatheSpeed" min={0} max={5} step={0.01} />
             <DatNumber label="Tall Point Exaggeration" path="breatheTallPointExaggeration" min={-100} max={100} step={1} />
             <DatNumber label="Waviness" path="breatheWaviness" min={0} max={15} step={0.1} />

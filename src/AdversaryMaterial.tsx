@@ -1,12 +1,12 @@
 import { DoubleSide, ShaderMaterial, Texture } from "three";
 import { DRIVER } from "./AdversaryRendering";
 import { GUIState, STATE } from "./App";
-import { createDisplacementMap } from "./createDisplacementMap";
 import { glsl } from "./glsl";
 import { GLSL_NOISE } from "./GLSL_NOISE";
 import { GradientEffect } from "./GradientEffect";
 
 export class AdversaryMaterial extends ShaderMaterial {
+  
   public textureCache: Record<string, Texture> = {};
   private activeTexture: string = "Buffalo";
 
@@ -25,6 +25,8 @@ export class AdversaryMaterial extends ShaderMaterial {
         breatheTallPointExaggeration: { value: 20 },
         breatheNoiseSpeed: { value: 0.2 },
         breatheNoiseAmount: { value: 4 },
+        breatheZAmount: { value: 0 },
+        breatheXYAmount: { value: 1 },
 
         time: { value: 0 },
 
@@ -45,6 +47,13 @@ export class AdversaryMaterial extends ShaderMaterial {
     this.updateMap();
   }
 
+  setTextureBase(textureBase: Texture) {
+    this.baseTexture = textureBase;
+    this.gradientEffect.setTextureBase(textureBase);
+    this.uniforms.baseTexture.value = this.baseTexture;
+    this.needsUpdate = true;
+  }
+
   private updateMap() {
     if (STATE.gradientEnabled) {
       this.uniforms.map.value = this.gradientEffect.texture;
@@ -63,6 +72,8 @@ export class AdversaryMaterial extends ShaderMaterial {
     this.uniforms.breatheTallPointExaggeration.value = state.breatheTallPointExaggeration;
     this.uniforms.breatheNoiseSpeed.value = state.breatheNoiseSpeed;
     this.uniforms.breatheNoiseAmount.value = state.breatheNoiseAmount;
+    this.uniforms.breatheZAmount.value = state.breatheZAmount;
+    this.uniforms.breatheXYAmount.value = state.breatheXYAmount;
   }
 
   animate(zScale: number, time: number) {
@@ -73,11 +84,10 @@ export class AdversaryMaterial extends ShaderMaterial {
     this.needsUpdate = true;
   }
 
-  static create(textureBase: Texture, state: GUIState) {
-    const {
-      maxBrightness,
-      minBrightness,
-    } = createDisplacementMap(textureBase)!;
+  static create(state: GUIState) {
+    const textureBase: Texture = null!;
+    const minBrightness = 0;
+    const maxBrightness = 0.9;
     const gradientEffect = new GradientEffect(
       textureBase,
       state,
@@ -104,6 +114,8 @@ uniform float breatheWholeBodyMovement; // 2.0
 uniform float breatheTallPointExaggeration; // 20
 uniform float breatheNoiseSpeed; // 0.2
 uniform float breatheNoiseAmount; // 4
+uniform float breatheZAmount; // [-1, 1]
+uniform float breatheXYAmount; // [-1, 1]
 
 varying vec2 vUv;
 
@@ -116,10 +128,6 @@ void main() {
   float brightness = dot(baseColor.rgb, vec3(0.299, 0.587, 0.114));
 
   vec3 transformed = position;
-
-  float dz = displacementScale * brightness;
-
-  transformed.z += dz;
 
   vec2 offset = vec2(0., 0.);
 
@@ -139,7 +147,9 @@ void main() {
     cnoise(uv * 0.5 + vec2(91.3 - noiseTime, -123.2 + noiseTime))
   ) * breatheNoiseAmount * brightness;
 
-  transformed.xy += offset;
+  float dz = displacementScale * brightness;
+  transformed.z += mix(dz, dz * length(offset) / 20., breatheZAmount);
+  transformed.xy += offset * breatheXYAmount;
 
   gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
 }
