@@ -19,6 +19,13 @@ export class AdversaryMaterial extends ShaderMaterial {
   ) {
     super({
       uniforms: {
+        breatheWaviness: { value: 2.2 },
+        breatheSpeed: { value: 1.0 },
+        breatheWholeBodyMovement: { value: 2.0 },
+        breatheTallPointExaggeration: { value: 20 },
+        breatheNoiseSpeed: { value: 0.2 },
+        breatheNoiseAmount: { value: 4 },
+
         time: { value: 0 },
 
         // used for heightmap
@@ -49,6 +56,13 @@ export class AdversaryMaterial extends ShaderMaterial {
 
   public setState(state: GUIState) {
     this.updateMap();
+
+    this.uniforms.breatheWaviness.value = state.breatheWaviness;
+    this.uniforms.breatheSpeed.value = state.breatheSpeed;
+    this.uniforms.breatheWholeBodyMovement.value = state.breatheWholeBodyMovement;
+    this.uniforms.breatheTallPointExaggeration.value = state.breatheTallPointExaggeration;
+    this.uniforms.breatheNoiseSpeed.value = state.breatheNoiseSpeed;
+    this.uniforms.breatheNoiseAmount.value = state.breatheNoiseAmount;
   }
 
   animate(zScale: number, time: number) {
@@ -83,6 +97,14 @@ const vertexShader = glsl`
 uniform float displacementScale;
 uniform sampler2D baseTexture;
 uniform float time;
+
+uniform float breatheWaviness; // 2.2
+uniform float breatheSpeed; // 1.0
+uniform float breatheWholeBodyMovement; // 2.0
+uniform float breatheTallPointExaggeration; // 20
+uniform float breatheNoiseSpeed; // 0.2
+uniform float breatheNoiseAmount; // 4
+
 varying vec2 vUv;
 
 ${GLSL_NOISE}
@@ -101,20 +123,21 @@ void main() {
 
   vec2 offset = vec2(0., 0.);
 
-  float t = time + (1.0 + length(transformed.xy)) / 100.0 * 2.2;
+  float t = time + (1.0 + length(transformed.xy)) / 100.0 * breatheWaviness;
+  t *= breatheSpeed;
 
   // make the entire thing expand and shrink
-  offset += transformed.xy / 100.0 * (1.0 + sin(t)) * 2.0;
+  offset += transformed.xy / 100.0 * (1.0 + sin(t)) * breatheWholeBodyMovement;
 
   // make taller points expand/shrink more
-  offset += transformed.xy / 100.0 * (1.0 + sin(t)) * 20.0 * brightness * brightness;
+  offset += transformed.xy / 100.0 * (1.0 + sin(t)) * breatheTallPointExaggeration * brightness * brightness;
 
   // add some flow noise to the taller points
-  float noiseTime = t * 0.2;
+  float noiseTime = t * breatheNoiseSpeed;
   offset += vec2(
     cnoise(uv * 0.5 + vec2(noiseTime, 0)),
     cnoise(uv * 0.5 + vec2(91.3 - noiseTime, -123.2 + noiseTime))
-  ) * 4.0 * brightness;
+  ) * breatheNoiseAmount * brightness;
 
   transformed.xy += offset;
 
