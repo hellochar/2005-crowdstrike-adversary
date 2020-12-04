@@ -1,11 +1,10 @@
 import {
   AmbientLight,
   Color,
-  DoubleSide,
   Euler,
   MathUtils,
   Mesh,
-  MeshStandardMaterial,
+
   OrthographicCamera,
   PlaneGeometry,
   Scene,
@@ -19,10 +18,8 @@ import {
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 import { FilmPass } from "three/examples/jsm/postprocessing/FilmPass";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
-import { DRIVER } from "./AdversaryRendering";
+import { AdversaryMaterial } from "./AdversaryMaterial";
 import { GUIState, STATE } from "./App";
-import { createDisplacementMap } from "./createDisplacementMap";
-import { GradientEffect } from "./GradientEffect";
 import { OrbitControls } from "./OrbitControls";
 import { smoothstep } from "./smoothstep";
 
@@ -260,77 +257,14 @@ class AdversaryMesh extends Mesh<PlaneGeometry, AdversaryMaterial> {
   }
 
   animate() {
+    const time = (performance.now() - this.timeStarted) / 1000;
     const zScale =
-      (smoothstep(0, 5000, performance.now() - this.timeStarted) *
+      (smoothstep(0, 5, time) *
         STATE.growLength) /
       this.material.maxBrightness;
 
-    this.material.animate(zScale);
+    this.material.animate(zScale, time);
 
     this.position.z = -zScale / 2;
-  }
-}
-
-class AdversaryMaterial extends MeshStandardMaterial {
-  animate(zScale: number) {
-    this.displacementScale = zScale;
-    this.gradientEffect.material.update(STATE);
-    this.gradientEffect.render(DRIVER.renderer);
-  }
-  constructor(
-    public textureBase: Texture,
-    public state: GUIState,
-    // in [0 to 1]
-    public minBrightness: number,
-    public maxBrightness: number,
-    public displacementMap: Texture,
-    public gradientEffect: GradientEffect
-  ) {
-    super({
-      side: DoubleSide,
-      displacementMap,
-      displacementScale: 0,
-      transparent: true,
-      roughness: 1,
-      metalness: 0,
-    });
-    if (this.state.gradientEnabled) {
-      this.map = this.gradientEffect.texture;
-    } else {
-      this.map = this.textureBase!;
-    }
-    this.needsUpdate = true;
-  }
-
-  public setState(state: GUIState) {
-    if (state.gradientEnabled) {
-      this.map = this.gradientEffect.texture;
-      this.gradientEffect.material.update(state);
-    } else {
-      this.map = this.textureBase;
-    }
-    this.needsUpdate = true;
-  }
-
-  static create(textureBase: Texture, state: GUIState) {
-    const {
-      texture: displacementMap,
-      maxBrightness,
-      minBrightness,
-    } = createDisplacementMap(textureBase)!;
-    const gradientEffect = new GradientEffect(
-      textureBase,
-      state,
-      maxBrightness,
-      minBrightness
-    );
-    return new AdversaryMaterial(
-      textureBase,
-      state,
-      minBrightness,
-      maxBrightness,
-      displacementMap,
-      gradientEffect
-    );
   }
 }
