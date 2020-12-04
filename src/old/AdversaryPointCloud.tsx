@@ -9,7 +9,7 @@ import {
   TextureLoader,
   Vector3
 } from "three";
-import { downsampledImageData } from "../AdversaryDriver";
+import { downsampledImageData } from "../downsampledImageData";
 import { perlin2 } from "../perlin";
 import { smoothstep } from "../smoothstep";
 
