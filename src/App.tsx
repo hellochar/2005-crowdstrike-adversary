@@ -5,7 +5,7 @@ import DatGui, {
   DatColor,
   DatFolder,
   DatNumber,
-  DatSelect,
+
   DatString
 } from "react-dat-gui";
 import "react-dat-gui/dist/index.css";
@@ -14,8 +14,6 @@ import "./App.css";
 import { ImageDropzone } from "./ImageDropzone";
 
 export interface GUIState {
-  mode: "heightmap" | "particles";
-  particleDistortion: "messycircle" | "noiseflow" | "sphere";
   noiseIntensity: number;
   scanlineIntensity: number;
   parallaxEnabled: boolean;
@@ -30,8 +28,6 @@ export interface GUIState {
 }
 
 export const STATE: GUIState = {
-  mode: "heightmap",
-  particleDistortion: "noiseflow",
   background: "#808080",
   growLength: 50,
   noiseIntensity: 0.25,
@@ -74,16 +70,6 @@ function App() {
       <AdversaryRendering img={img} state={state} />
       <ImageDropzone onGotImage={setImage} />
       <DatGui data={state} onUpdate={setState}>
-        <DatSelect
-          path="mode"
-          label="Mode"
-          options={["heightmap", "particles"]}
-        />
-        <DatSelect
-          path="particleDistortion"
-          label="Particle Distortion"
-          options={["noiseflow", "sphere", "messycircle"]}
-        />
         <DatColor path="background" label="Background" />
         <DatNumber
           path="growLength"

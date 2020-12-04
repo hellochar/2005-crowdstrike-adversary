@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Color,
   Geometry,
@@ -8,10 +9,9 @@ import {
   TextureLoader,
   Vector3
 } from "three";
-import { downsampledImageData } from "./AdversaryDriver";
-import { STATE } from "./App";
-import { perlin2 } from "./perlin";
-import { smoothstep } from "./smoothstep";
+import { downsampledImageData } from "../AdversaryDriver";
+import { perlin2 } from "../perlin";
+import { smoothstep } from "../smoothstep";
 
 export class AdversaryPointCloud extends Points {
   private geom: Geometry;
@@ -34,7 +34,8 @@ export class AdversaryPointCloud extends Points {
       if (mode === "heightmap") {
         this.animateHeightmap(i, time);
       } else {
-        switch (STATE.particleDistortion) {
+        const distortion: string = "messycircle";
+        switch (distortion) {
           case "messycircle":
             this.animateCircleMessy(i, time);
             break;

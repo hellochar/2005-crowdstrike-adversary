@@ -21,7 +21,6 @@ import {
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 import { FilmPass } from "three/examples/jsm/postprocessing/FilmPass";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
-import { AdversaryPointCloud } from "./AdversaryPointCloud";
 import { GUIState } from "./App";
 import { GradientEffect } from "./GradientEffect";
 import { OrbitControls } from "./OrbitControls";
@@ -38,7 +37,6 @@ export class AdversaryDriver {
   geom = new PlaneGeometry(200, 200, 512, 512);
   textureBase?: Texture;
   gradientEffect!: GradientEffect;
-  pointCloud?: AdversaryPointCloud;
   // in [0 to 1]
   maxBrightness!: number;
   minBrightness!: number;
@@ -118,25 +116,6 @@ export class AdversaryDriver {
       this.adversaryMaterial.needsUpdate = true;
     }
     (this.scene.background as Color).set(state.background);
-    if (
-      state.mode === "heightmap" &&
-      this.adversary != null &&
-      this.adversary.parent == null
-    ) {
-      this.scene.add(this.adversary);
-      if (this.pointCloud) {
-        this.scene.remove(this.pointCloud);
-      }
-    } else if (
-      state.mode === "particles" &&
-      this.pointCloud != null &&
-      this.pointCloud.parent == null
-    ) {
-      this.scene.add(this.pointCloud);
-      if (this.adversary) {
-        this.scene.remove(this.adversary);
-      }
-    }
   }
 
   cameraTarget?: Vector3;
@@ -153,9 +132,6 @@ export class AdversaryDriver {
     if (this.adversary != null) {
       this.scene.remove(this.adversary);
       this.adversaryMaterial?.dispose();
-    }
-    if (this.pointCloud != null) {
-      this.scene.remove(this.pointCloud);
     }
     this.textureBase = textureBase;
     const {
@@ -186,12 +162,7 @@ export class AdversaryDriver {
       this.adversaryMaterial.map = this.textureBase!;
     }
     this.adversary = new Mesh(this.geom, this.adversaryMaterial);
-    this.pointCloud = new AdversaryPointCloud(textureBase);
-    if (this.state.mode === "heightmap") {
-      this.scene.add(this.adversary);
-    } else {
-      this.scene.add(this.pointCloud);
-    }
+    this.scene.add(this.adversary);
 
     this.composer.render();
     this.timeStarted = performance.now();
@@ -237,9 +208,6 @@ export class AdversaryDriver {
         this.maxBrightness;
       this.adversaryMaterial.displacementScale = zScale;
       this.adversary.position.z = -zScale / 2;
-    }
-    if (this.state.mode === "particles") {
-      this.pointCloud?.animate();
     }
     this.gradientEffect?.material.update(this.state);
     this.gradientEffect?.render(this.renderer);

@@ -12,7 +12,7 @@ import {
   WebGLRenderer,
   WebGLRenderTarget
 } from "three";
-import { glsl } from "./glsl";
+import { glsl } from "../glsl";
 
 // adapted from https://github.com/jpupper/WebShaderGallery/blob/master/js/render.js
 export class PixelBleed {
