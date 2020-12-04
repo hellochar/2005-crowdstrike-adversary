@@ -11,6 +11,7 @@ import DatGui, {
 import "react-dat-gui/dist/index.css";
 import { AdversaryRendering, DRIVER } from "./AdversaryRendering";
 import "./App.css";
+import { BuiltinTextures } from "./BuiltinTextures";
 import { ImageDropzone } from "./ImageDropzone";
 
 export interface GUIState {
@@ -81,6 +82,7 @@ function App() {
     <div className={`App${!showUI ? " hide-ui" : ""}`}>
       <AdversaryRendering img={img} state={state} />
       <ImageDropzone onGotImage={setImage} />
+      <AdversariesList />
       <DatGui data={state} onUpdate={setState}>
         <DatColor path="background" label="Background" />
         <DatNumber
@@ -130,6 +132,19 @@ function App() {
       </DatGui>
     </div>
   );
+}
+
+const AdversariesList = () => {
+  const handleMouseOver = (name: string) => {
+    DRIVER.setAdversary(name);
+  };
+  return (
+    <div className="adversaries-list">
+      { BuiltinTextures.map((name) => {
+        return <h1 onMouseOver={() => handleMouseOver(name)}>{name}</h1>
+      })}
+    </div>
+  )
 }
 
 export default App;

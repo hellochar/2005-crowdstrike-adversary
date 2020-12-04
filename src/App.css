@@ -58,6 +58,14 @@ canvas {
   border-radius: 2px;
 }
 
+.adversaries-list {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: auto;
+  width: 500px;
+}
+
 .react-dat-gui {
   width: 400px;
 }

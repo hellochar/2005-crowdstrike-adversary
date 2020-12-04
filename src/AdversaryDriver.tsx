@@ -55,7 +55,7 @@ export class AdversaryDriver {
     this.scene.add(new AmbientLight(0xffffff));
     this.scene.background = new Color(1, 1, 1);
 
-    this.loadDefaultImage();
+    this.setAdversary("Buffalo");
 
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.spherical0 = new Spherical();
@@ -89,23 +89,23 @@ export class AdversaryDriver {
     }
   };
 
-  loadDefaultImage() {
-    new TextureLoader().load(
-      "/2005-crowdstrike-adversary/adversaries/Buffalo.jpg",
-      (texture) => {
-        this.recreateAdversary(texture);
-      },
-      (event) => console.log(event),
-      (event) => console.error(event)
-    );
-  }
-
   setImage(img: HTMLImageElement) {
     const texture = new Texture(img);
     img.onload = function () {
       texture.needsUpdate = true;
     };
     this.recreateAdversary(texture);
+  }
+
+  setAdversary(name: string) {
+    new TextureLoader().load(
+      `/2005-crowdstrike-adversary/adversaries/${name}.jpg`,
+      (texture) => {
+        this.recreateAdversary(texture);
+      },
+      (event) => console.log(event),
+      (event) => console.error(event)
+    )
   }
 
   setState(state: GUIState) {
